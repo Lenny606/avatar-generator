@@ -41,15 +41,40 @@ class GeminiAIClient(BaseAIClient):
             return f"Chyba při volání AI: {str(e)}"
 
 class OpenAIClient(BaseAIClient):
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+
     async def edit_image(self, image: PILImage.Image, prompt: str) -> str:
-        return f"OpenAI (simulace): Přijal jsem obrázek a prompt: '{prompt}'"
+        if not self.api_key:
+            return "Chyba: Chybí API klíč (OPENAI_API_KEY)."
+        # Zde by byla reálná implementace přes openai SDK
+        return f"OpenAI (DALL-E/GPT-4o): Simulované zpracování promptu '{prompt}'."
+
+class StabilityAIClient(BaseAIClient):
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.environ.get("STABILITY_API_KEY")
+
+    async def edit_image(self, image: PILImage.Image, prompt: str) -> str:
+        if not self.api_key:
+            return "Chyba: Chybí API klíč (STABILITY_API_KEY)."
+        # Zde by byla reálná implementace přes Stability AI API
+        return f"Stability AI: Simulovaná stylizace obrazu dle '{prompt}'."
 
 class AIService:
+    _registry = {
+        "gemini": GeminiAIClient,
+        "openai": OpenAIClient,
+        "stability": StabilityAIClient
+    }
+
     @staticmethod
     def get_client(provider="gemini"):
-        if provider == "gemini":
-            return GeminiAIClient()
-        elif provider == "openai":
-            return OpenAIClient()
+        provider = provider.lower()
+        if provider in AIService._registry:
+            return AIService._registry[provider]()
         else:
             raise ValueError(f"Neznámý poskytovatel: {provider}")
+
+    @staticmethod
+    def get_available_providers():
+        return list(AIService._registry.keys())
